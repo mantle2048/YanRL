@@ -1,1 +1,1 @@
-# ppo_super_mario
+# YanRL
