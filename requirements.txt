@@ -1,6 +1,9 @@
 gym==0.17.3
 box2d-py==2.3.8
-mojuco_py==2.0.2.13
+mujoco_py==2.0.2.8
 matplotlib
 seaborn
 pandas
+joblib
+gym_super_mario_bros
+cv2
