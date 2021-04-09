@@ -17,19 +17,19 @@ from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 if __name__ == '__main__' and '__file__' in globals():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--policy_name', type=str, default='mp_ppo')
-    parser.add_argument('--env_name', type=str, default='SuperMarioBros-8-1-v0')
+    parser.add_argument('--policy', type=str, default='mp_ppo')
+    parser.add_argument('--env', type=str, default='SuperMarioBros-8-1-v0')
     parser.add_argument('--policy_type', type=str, default='cnn')
     args = parser.parse_args()
 
 
-    exp_name = args.policy_name + '_' + args.env_name
+    exp_name = args.policy + '_' + args.env
 
     output=f'./data/{exp_name}/{exp_name}_seed_0'
 
-    env = gym.make(args.env_name)
+    env = gym.make(args.env)
 
-    if 'SuperMario' in args.env_name:
+    if 'SuperMario' in args.env:
         env = JoypadSpace(env, SIMPLE_MOVEMENT)
         env = ReshapeReward(env, monitor=None)
         env = SkipObs(env)
@@ -54,6 +54,9 @@ if __name__ == '__main__' and '__file__' in globals():
     # This Command for add audio to video(Magic)
     # ffmpeg -i video.mp4 -i audio.mp3 -map 0:v -map 1:a -codec copy -shortest out.mp4
     # Source: https://stackoverflow.com/questions/20254846/how-to-add-an-external-audio-track-to-a-video-file-using-vlc-or-ffmpeg-command-l
+
+    # xvfb-run -s "-screen 0 640x480x24" python test_model.py
+    # this cmd are for envs needs display to render(like CartPloy-v1)
     for ep in range(10):
         obs = env.reset()
         if obs_normal is not None:

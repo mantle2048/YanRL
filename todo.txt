@@ -1,2 +1,3 @@
 1: Make ObsNormal from function to Wrapper with env
-4: convert gym.Monitor to Yan.Monior
+2: convert gym.Monitor to Yan.Monior
+3: nes_py was modifed by me, it's a latent bug

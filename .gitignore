@@ -2,6 +2,9 @@ __pycache__/
 tags
 .ipynb_checkpoints/
 data/
-models/
+model/
 results/
 img/
+video/
+output_video/
+trained_model/
