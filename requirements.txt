@@ -1,0 +1,6 @@
+gym==0.17.3
+box2d-py==2.3.8
+mojuco_py==2.0.2.13
+matplotlib
+seaborn
+pandas
