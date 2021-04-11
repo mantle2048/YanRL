@@ -144,7 +144,7 @@ class MLPActorCritic(nn.Module):
             a = dist.sample()
             logp_a = self.pi._log_prob_from_distribution(dist, a)
             v = self.v(obs)
-        return a.cpu().numpy().squeeze(), v.cpu().numpy(), logp_a.cpu().numpy()
+        return a.cpu().numpy(), v.cpu().numpy(), logp_a.cpu().numpy()
 
     def forward(self):
         raise NotImplementedError
@@ -302,7 +302,7 @@ class CNNActorCritic(nn.Module):
             a = dist.sample()
             logp_a = self.pi._log_prob_from_distribution(dist, a)
             v = self.v(obs)
-        return a.cpu().numpy().squeeze(), v.cpu().numpy(), logp_a.cpu().numpy()
+        return a.cpu().numpy(), v.cpu().numpy(), logp_a.cpu().numpy()
 
     def forward(self):
         raise NotImplementedError

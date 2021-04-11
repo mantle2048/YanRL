@@ -126,7 +126,7 @@ def train():
             act = env.action_space.sample()
 
         # Step the env
-        next_obs, rew, done, _ = env.step(act)
+        next_obs, rew, done, _ = env.step(act.squeeze())
         if args.obs_norm:
             next_obs = ObsNormal.normalize_all(next_obs)
         episode_rew += rew
