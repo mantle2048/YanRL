@@ -39,11 +39,7 @@ class SingleEnv(gym.Wrapper):
 
     def step(self, action):
 
-        if isinstance(self.env.action_space, Box):
-            obs, rew, done, info = self.env.step(action)
-        elif isinstance(self.env.action_space, Discrete):
-            obs, rew, done, info = self.env.step(action.squeeze())
-
+        obs, rew, done, info = self.env.step(action)
         return obs[None], np.array([rew]), np.array([done]), info
 
 
