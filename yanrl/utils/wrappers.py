@@ -2,7 +2,7 @@ import gym
 import torch
 import numpy as np
 from gym import Wrapper
-from gym.spaces import Box
+from gym.spaces import Box, Discrete
 import cv2
 import subprocess as sp
 
@@ -38,7 +38,12 @@ class SingleEnv(gym.Wrapper):
         return self.env.reset()[None]
 
     def step(self, action):
-        obs, rew, done, info = self.env.step(action)
+
+        if isinstance(self.env.action_space, Box):
+            obs, rew, done, info = self.env.step(action)
+        elif isinstance(self.env.action_space, Discrete):
+            obs, rew, done, info = self.env.step(action.squeeze())
+
         return obs[None], np.array([rew]), np.array([done]), info
 
 

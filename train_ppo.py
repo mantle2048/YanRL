@@ -117,7 +117,7 @@ def train():
         for t in range(local_steps_per_epoch):
             act, val, logp = policy.step(obs)
 
-            next_obs, ret, done, info = env.step(act.squeeze())
+            next_obs, ret, done, info = env.step(act)
             if args.obs_norm:
                 next_obs = ObsNormal.normalize_all(next_obs)
             episode_ret += ret
