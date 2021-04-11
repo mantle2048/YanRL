@@ -6,4 +6,4 @@ seaborn
 pandas
 joblib
 gym_super_mario_bros
-cv2
+opencv_python
