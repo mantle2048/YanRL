@@ -3,6 +3,8 @@ import time
 import argparse
 import torch
 import numpy as np
+import gym
+import pybullet_envs
 import torch.nn as nn
 from yanrl import TD3
 from yanrl import EpochLogger
@@ -18,8 +20,9 @@ def train():
     parser.add_argument('--policy', type=str, default='td3')
     parser.add_argument('--policy_type', type=str, default='mlp')
     parser.add_argument('--env', type=str, default='HalfCheetah-v3')
-    parser.add_argument('--hidden_size', type=int, default=256)
-    parser.add_argument('--layers_len', type=int, default=2)
+    parser.add_argument('--hidden_sizes', nargs='+', type=int)
+    # parser.add_argument('--layers_len', type=int, default=2)
+    # parser.add_argument('--hidden_size', type=int, default=256)
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--start_timesteps', type=int, default=int(25e3))
     parser.add_argument('--gamma', type=float, default=0.99)
@@ -74,8 +77,10 @@ def train():
 
     kwargs = {
         'env': env,
-        'actor_critic': core.MLPDetActorCritic,
-        'ac_kwargs': dict(hidden_sizes=[args.hidden_size]*args.layers_len),
+        'actor_critic': MLPDetActorCritic,
+        # 'ac_kwargs': dict(hidden_sizes=[args.hidden_size]*args.layers_len),
+        # 'ac_kwargs': dict(hidden_sizes=[400, 300]),
+        'ac_kwargs': dict(hidden_sizes=args.hidden_sizes, pso_kwargs=pso_kwargs),
         'gamma': args.gamma,
         'batch_size': args.batch_size,
         'tau': args.tau,
@@ -120,10 +125,10 @@ def train():
         # Until start_steps have elapsed, randomly sample actions
         # from a uniform distribution for better exploration. Aferwards,
         # use the learned policy (with some noise, via act_noise)
-        if t > args.start_timesteps:
-            act = policy.select_action(obs)
+        if t < args.start_timesteps:
+            act = env.action_space.sample()[None]
         else:
-            act = env.action_space.sample()
+            act = policy.select_action(obs)
 
         # Step the env
         if args.cpu == 1:

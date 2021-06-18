@@ -24,12 +24,15 @@ def plot_data(data, xaxis='Epoch', value='AverageEpRet', condition="Condition1",
         where the "smooth" param is width of that window (2k+1)
         '''
         y = np.ones(smooth)
+        # for datum in data:
+        #     x = np.asarray(datum[value])
+        #     z = np.ones_like(x)
+        #     # The y is kernel conv(x, y) makes value in x to be the sum of windows size and then divide by conv(z, y) which represt the number of value in window
+        #     smoothed_x = np.convolve(x,y,'same') / np.convolve(z, y,'same')
+        #     datum[value] = smoothed_x
+        from scipy.ndimage import uniform_filter1d
         for datum in data:
-            x = np.asarray(datum[value])
-            z = np.ones_like(x)
-            # The y is kernel conv(x, y) makes value in x to be the sum of windows size and then divide by conv(z, y) which represt the number of value in window
-            smoothed_x = np.convolve(x,y,'same') / np.convolve(z, y,'same')
-            datum[value] = smoothed_x
+            datum[value] = uniform_filter1d(datum[value], size=smooth)
     if isinstance(data, list):
         data = pd.concat(data, ignore_index=True)
     sns.set(style="darkgrid", font_scale=1.5)

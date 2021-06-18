@@ -14,7 +14,7 @@ class TD3:
     def __init__(
         self,
         env,
-        actor_critic=core.MLPActorCritic,
+        actor_critic=core.MLPDetActorCritic,
         ac_kwargs=dict(),
         gamma=0.99,
         batch_size=256,
@@ -136,13 +136,14 @@ class TD3:
                     p_target.data.mul_(1 - self.tau)
                     p_target.data.add_(self.tau * p.data)
 
-    def select_action(self, obs):
+    def select_action(self, obs, eval=False):
         obs = torch.as_tensor(obs, dtype=torch.float32).to(self.device)
         act = self.ac.act(obs)  # Return np.nparray fmt
-        act += np.random.normal(0, self.max_action*self.expl_noise, size=self.act_dim)
+        if not eval:
+            act = act + np.random.normal(0, self.max_action*self.expl_noise, size=act.shape)
         return np.clip(act, -self.max_action, self.max_action)
 
-    def eval_policy(self, env_name, seed, eval_episodes=5):
+    def eval_policy(self, env_name, seed, eval_episodes=10):
 
         '''Runs policy for X episodes and returns average reward
         A fixed seed is used for the eval environment
@@ -156,7 +157,7 @@ class TD3:
             obs, done, ep_rew, ep_len = eval_env.reset(), False, 0., 0
             while not done:
                 # Take deterministic actions at test time (noise=0)
-                obs, rew, done, _ = eval_env.step(self.select_action(obs))
+                obs, rew, done, _ = eval_env.step(self.select_action(obs, True).squeeze(axis=0))
                 ep_rew += rew
                 ep_len += 1
             self.logger.store(TestEpRet=ep_rew, TestEplen=ep_len)

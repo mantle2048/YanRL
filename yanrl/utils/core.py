@@ -262,6 +262,135 @@ class CNNCritic(nn.Module):
         return torch.squeeze(self.v_net(obs), dim=-1)  # Critical to ensure v has right shape
 
 
+
+class CNNGaussianActorCritic(nn.Module):
+    def __init__(self, obs_dim, act_dim, cnn_kwargs):
+        # obs_dim means img_size after flatten
+        super().__init__()
+        self.conv = cnn(**cnn_kwargs)
+        self.linear = nn.Sequential(nn.Linear(obs_dim, obs_dim//2), nn.ReLU())
+        self.mu_net = nn.Sequential(
+            self.conv,
+            self.linear,
+            nn.Linear(obs_dim // 2, act_dim)
+        )
+        self.v_net = nn.Sequential(
+            self.conv,
+            self.linear,
+            nn.Linear(obs_dim // 2, 1)
+        )
+
+
+        log_std = -0.5 * np.ones(act_dim, dtype=np.float32)
+        self.log_std = nn.Parameter(torch.as_tensor(log_std))
+        self.register_parameter('log_std', self.log_std)
+
+    def _distribution(self, obs):
+        mu = self.mu_net(obs)
+        std = torch.exp(self.log_std)
+        return Normal(mu, std)
+
+    def _log_prob_from_distribution(self, pi, act):
+        return pi.log_prob(act).sum(dim=-1)
+
+    def _pi(self, obs, act=None):
+        # If act is None means use v_net to generate Vvalues
+        # else mean use mu_net to generate pi and log_p
+
+        pi = self._distribution(obs)
+        logp_a = None
+        if act is not None:
+            act = act
+            logp_a = self._log_prob_from_distribution(pi, act)
+        return pi, logp_a
+
+    def _v(self, obs):
+        return torch.squeeze(self.v_net(obs), dim=-1)
+
+class CNNCategoricalActorCritic(nn.Module):
+
+    def __init__(self, obs_dim, act_dim, cnn_kwargs):
+        # obs_dim means img_size after flatten
+        super().__init__()
+        self.conv = cnn(**cnn_kwargs)
+        # self.conv1 = cnn(**cnn_kwargs)
+        # self.conv2 = cnn(**cnn_kwargs)
+        self.linear = nn.Sequential(nn.Linear(obs_dim, obs_dim//2), nn.ReLU())
+        # self.linear1 = nn.Sequential(nn.Linear(obs_dim, obs_dim//2), nn.ReLU())
+        # self.linear2 = nn.Sequential(nn.Linear(obs_dim, obs_dim//2), nn.ReLU())
+        self.logits_net = nn.Sequential(
+            self.conv,
+            self.linear,
+            nn.Linear(obs_dim // 2, act_dim)
+        )
+        self.v_net = nn.Sequential(
+            self.conv,
+            self.linear,
+            nn.Linear(obs_dim // 2, 1)
+        )
+
+    def _distribution(self, obs):
+        logits = self.logits_net(obs)
+        return Categorical(logits=logits)
+
+    def _log_prob_from_distribution(self, pi, act):
+        return pi.log_prob(act)
+
+    def _pi(self, obs, act=None):
+        # If act is None means use v_net to generate Vvalues
+        # else mean use mu_net to generate pi and log_p
+
+        pi = self._distribution(obs)
+        logp_a = None
+        if act is not None:
+            act = act
+            logp_a = self._log_prob_from_distribution(pi, act)
+        return pi, logp_a
+
+    def _v(self, obs):
+        return torch.squeeze(self.v_net(obs), dim=-1)
+
+class CNNJoinActorCritic(nn.Module):
+
+    def __init__(self, observation_space, action_space, hidden_sizes=None, activation=nn.ReLU):
+        # hidden_sizes is not used, just for api consistent
+        super().__init__()
+
+        input_channel, hight, width, = observation_space.shape
+        channel = 32
+        channels, kernel_size, stride, padding = [input_channel] + [channel] * 4, 3, 2, 1
+        obs_dim = count_cnn_output((hight, width), channel, kernel_size, stride, padding, len(channels)-1)
+
+        cnn_kwargs = dict(
+            channels=channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            activation=activation
+        )
+
+        if isinstance(action_space, Box):
+            self.net = CNNGaussianActorCritic(obs_dim, action_space.shape[0], cnn_kwargs)
+        elif isinstance(action_space, Discrete):
+            self.net = CNNCategoricalActorCritic(obs_dim, action_space.n, cnn_kwargs)
+
+    def pi(self, obs, act=None):
+        return self.net._pi(obs, act)
+
+    def v(self, obs):
+        return self.net._v(obs)
+
+    def _step(self, obs):
+        with torch.no_grad():
+            dist = self.net._distribution(obs)
+            a = dist.sample()
+            logp_a = self.net._log_prob_from_distribution(dist, a)
+            v = self.net._v(obs)
+        return a.cpu().numpy(), v.cpu().numpy(), logp_a.cpu().numpy()
+    def forward(self):
+        raise NotImplementedError
+
+
 class CNNActorCritic(nn.Module):
 
     def __init__(self, observation_space, action_space, hidden_sizes=None, activation=nn.ReLU, common=False):
